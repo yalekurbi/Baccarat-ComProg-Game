@@ -201,7 +201,7 @@ int main(void)
             {
                 DrawText("YOU WIN!", 290, 300, 50, YELLOW);
             } 
-            elsea
+            else
             {
                 DrawText("YOU LOSE!", 270, 300, 50, RED);
             }
