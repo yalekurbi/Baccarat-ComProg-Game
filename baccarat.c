@@ -1,221 +1,348 @@
 #include "raylib.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <stdio.h>
 
-int main(void) 
+#define SCREEN_WIDTH 1200
+#define SCREEN_HEIGHT 800
+
+int gamestate = 0;
+int money = 1000;
+int bet = 100;
+int endingType = 0;
+float fade = 0;
+int fadeDirection = 1;
+bool borrowedMoney = false;
+int playerCard = 0;
+int dealerCard = 0;
+int gameOver = 0;
+int showDealer = 0;
+
+void ResetGame();
+void MainMenu();
+void BorrowPopup();
+void gameloop();
+void EndingScreen();
+
+int main(void)
 {
-    InitWindow(800, 600, "Testing Testing");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Baccarat Game");
     SetTargetFPS(60);
     
-    // variables
-    int playerCard = 0;
-    int dealerCard = 0;
-    int gameState = 0;
-    bool showDealerCard = false;
-    int playerTextX = 200;
-    int dealerTextX = 600;
-    int cardY = 250;
-    int textY = 150;
-    int money = 1000;
-    int bet = 100;
-    
-    Rectangle higherButton = { 250, 500, 100, 50 };
-    Rectangle lowerButton = { 450, 500, 100, 50 };
-    Rectangle playAgainButton = { 350, 500, 100, 50 };
-    
-    // Make random cards
     srand(time(NULL));
-    playerCard = (rand() % 13) + 1;
-    dealerCard = (rand() % 13) + 1;
+    ResetGame();
     
-    while (dealerCard == playerCard) {
-        dealerCard = (rand() % 13) + 1;
-    }
-    
-    while (!WindowShouldClose()) 
+    while (!WindowShouldClose())
     {
-        Vector2 mouse = GetMousePosition();
-        
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) // Higher or Lower Button
-        {
-            if (gameState == 0) 
-            {
-                if (CheckCollisionPointRec(mouse, higherButton)) 
-                {
-                    showDealerCard = true;
-                    if (dealerCard > playerCard) 
-                    {
-                        gameState = 1; // win
-                    } 
-                    else 
-                    {
-                        gameState = 2; // lose
-                    }
-                }
-                if (CheckCollisionPointRec(mouse, lowerButton)) 
-                {
-                    showDealerCard = true;
-                    if (dealerCard < playerCard) 
-                    {
-                        gameState = 1; // win
-                    } 
-                    else 
-                    {
-                        gameState = 2; // lose
-                    }
-                }
-            } 
-            // Play Again Button 
-            else 
-            {
-                if (CheckCollisionPointRec(mouse, playAgainButton)) 
-                {
-                    playerCard = (rand() % 13) + 1;
-                    dealerCard = (rand() % 13) + 1;
-                    
-                    while (dealerCard == playerCard) 
-                    {
-                        dealerCard = (rand() % 13) + 1;
-                    }
-                    
-                    showDealerCard = false;
-                    gameState = 0;
-                }
-            }
-        }
-        
         BeginDrawing();
-        ClearBackground(DARKGREEN);
-
-        // title
-        int titleWidth = MeasureText("BACCARAT", 40);
-        DrawText("BACCARAT", (800 - titleWidth) / 2, 50, 40, GOLD);
         
-        // Player Card
-        int playerTextWidth = MeasureText("Your Card:", 30);
-        DrawText("Your Card:", playerTextX - playerTextWidth / 2, textY, 30, WHITE);
-        DrawRectangle(playerTextX - 50, cardY, 100, 150, WHITE);
-        DrawRectangleLines(playerTextX - 50, cardY, 100, 150, BLACK);
-
-        // Player Card Value
-        if (playerCard == 1) 
+        // MAIN MENU
+        if (gamestate == 0)
         {
-            DrawText("A", playerTextX - 10, cardY + 60, 40, RED);
-        } 
-        else if (playerCard == 11) 
-        {
-            DrawText("J", playerTextX - 10, cardY + 60, 40, RED);
-        } 
-        else if (playerCard == 12) 
-        {
-            DrawText("Q", playerTextX - 10, cardY + 60, 40, RED);
-        } 
-        else if (playerCard == 13) 
-        {
-            DrawText("K", playerTextX - 10, cardY + 60, 40, RED);
-        } 
-        else if (playerCard == 10) 
-        {
-            DrawText("10", playerTextX - 20, cardY + 60, 40, RED);
-        } 
-        else 
-        {
-            if (playerCard == 2) DrawText("2", playerTextX - 10, cardY + 60, 40, RED);
-            if (playerCard == 3) DrawText("3", playerTextX - 10, cardY + 60, 40, RED);
-            if (playerCard == 4) DrawText("4", playerTextX - 10, cardY + 60, 40, RED);
-            if (playerCard == 5) DrawText("5", playerTextX - 10, cardY + 60, 40, RED);
-            if (playerCard == 6) DrawText("6", playerTextX - 10, cardY + 60, 40, RED);
-            if (playerCard == 7) DrawText("7", playerTextX - 10, cardY + 60, 40, RED);
-            if (playerCard == 8) DrawText("8", playerTextX - 10, cardY + 60, 40, RED);
-            if (playerCard == 9) DrawText("9", playerTextX - 10, cardY + 60, 40, RED);
-        }
-        
-        // Dealer Card 
-        int dealerTextWidth = MeasureText("Dealer Card:", 30);
-        DrawText("Dealer Card:", dealerTextX - dealerTextWidth / 2, textY, 30, WHITE);
-        DrawRectangle(dealerTextX - 50, cardY, 100, 150, WHITE);
-        DrawRectangleLines(dealerTextX - 50, cardY, 100, 150, BLACK);
-        
-        // Dealer Card Value
-        if (showDealerCard) 
-        {
-            if (dealerCard == 1) 
+            ClearBackground(DARKGREEN);
+    
+             // Title
+            DrawText("Gambling Simulator", SCREEN_WIDTH/2 - MeasureText("Gambling Simulator", 60)/2, 200, 60, GOLD);
+    
+            // Start Button
+            Rectangle startButton = { SCREEN_WIDTH/2 - 100, 400, 200, 80 };
+            DrawRectangleRec(startButton, GREEN);
+            DrawText("START", startButton.x + 50, startButton.y + 25, 30, BLACK);
+    
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
             {
-                DrawText("A", dealerTextX - 10, cardY + 60, 40, RED);
-            } 
-            else if (dealerCard == 11) 
-            {
-                DrawText("J", dealerTextX - 10, cardY + 60, 40, RED);
-            } 
-            else if (dealerCard == 12) 
-            {
-                DrawText("Q", dealerTextX - 10, cardY + 60, 40, RED);
-            } 
-            else if (dealerCard == 13) 
-            {
-                DrawText("K", dealerTextX - 10, cardY + 60, 40, RED);
-            } 
-            else if (dealerCard == 10) 
-            {
-                DrawText("10", dealerTextX - 20, cardY + 60, 40, RED);
-            } 
-            else 
-            {
-                if (dealerCard == 2) DrawText("2", dealerTextX - 10, cardY + 60, 40, RED);
-                if (dealerCard == 3) DrawText("3", dealerTextX - 10, cardY + 60, 40, RED);
-                if (dealerCard == 4) DrawText("4", dealerTextX - 10, cardY + 60, 40, RED);
-                if (dealerCard == 5) DrawText("5", dealerTextX - 10, cardY + 60, 40, RED);
-                if (dealerCard == 6) DrawText("6", dealerTextX - 10, cardY + 60, 40, RED);
-                if (dealerCard == 7) DrawText("7", dealerTextX - 10, cardY + 60, 40, RED);
-                if (dealerCard == 8) DrawText("8", dealerTextX - 10, cardY + 60, 40, RED);
-                if (dealerCard == 9) DrawText("9", dealerTextX - 10, cardY + 60, 40, RED);
+                Vector2 mouse = GetMousePosition();
+                if (CheckCollisionPointRec(mouse, startButton))
+                {
+                    ResetGame();
+                    gamestate = 1;
+                }
             }
-        } 
-        else 
-        {
-            // Dealer Card Down
-            DrawRectangle(dealerTextX - 40, cardY + 10, 80, 130, DARKBLUE);
-            DrawRectangleLines(dealerTextX - 40, cardY + 10, 80, 130, BLACK);
         }
-        
-        // Button During Game Loop
-        if (gameState == 0) 
-        {
-            // Higher Button
-            DrawRectangleRec(higherButton, GREEN);
-            DrawRectangleLinesEx(higherButton, 2, BLACK);
-            int higherTextWidth = MeasureText("HIGHER", 20);
-            DrawText("HIGHER", higherButton.x + (higherButton.width - higherTextWidth) / 2, higherButton.y + 15, 20, BLACK);
-            
-            // Lower Button
-            DrawRectangleRec(lowerButton, RED);
-            DrawRectangleLinesEx(lowerButton, 2, BLACK);
-            int lowerTextWidth = MeasureText("LOWER", 20);
-            DrawText("LOWER", lowerButton.x + (lowerButton.width - lowerTextWidth) / 2, lowerButton.y + 15, 20, BLACK);
-        } 
-        else 
-        {
-            // Win and Lose
-            if (gameState == 1) 
-            {
-                DrawText("YOU WIN!", 290, 300, 50, YELLOW);
-            } 
-            else
-            {
-                DrawText("YOU LOSE!", 270, 300, 50, RED);
-            }
-            
-            // Play Again button
-            DrawRectangleRec(playAgainButton, YELLOW);
-            DrawRectangleLinesEx(playAgainButton, 2, BLACK);
-            int playAgainWidth = MeasureText("PLAY AGAIN", 15);
-            DrawText("PLAY AGAIN", playAgainButton.x + (playAgainButton.width - playAgainWidth) / 2, playAgainButton.y + 15, 15, BLACK);
-        }
+
+        else if (gamestate == 1) gameloop();
+        else if (gamestate == 2) BorrowPopup();
+        else if (gamestate == 3) EndingScreen();
         
         EndDrawing();
     }
     
     CloseWindow();
     return 0;
+}
+
+// resets the game when finished
+void ResetGame()
+{
+    playerCard = (rand() % 13) + 1;
+    dealerCard = (rand() % 13) + 1;
+    while (dealerCard == playerCard)
+    {
+        dealerCard = (rand() % 13) + 1;
+    }
+    gameOver = 0;
+    showDealer = 0;
+    bet = 100;
+    borrowedMoney = false;
+}
+
+//===================== POPUP ==========================
+void BorrowPopup()
+{
+    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Fade(BLACK, 0.8f));
+    Rectangle popup = { SCREEN_WIDTH/2 - 350, SCREEN_HEIGHT/2 - 150, 700, 300 };
+    DrawRectangleRec(popup, DARKGRAY);
+    DrawRectangleLinesEx(popup, 3, WHITE);
+    
+    DrawText("You have insufficient money for the bet.", SCREEN_WIDTH/2 - MeasureText("You have insufficient money for the bet.", 28)/2, SCREEN_HEIGHT/2 - 80, 28, WHITE);
+    DrawText("Do you want to borrow money? :)", SCREEN_WIDTH/2 - MeasureText("Do you want to borrow money? :)", 28)/2, SCREEN_HEIGHT/2 - 40, 28, WHITE);
+    
+    Rectangle yesButton = { SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 + 50, 120, 50 };
+    Rectangle noButton = { SCREEN_WIDTH/2 + 30, SCREEN_HEIGHT/2 + 50, 120, 50 };
+    
+    DrawRectangleRec(yesButton, GREEN);
+    DrawRectangleRec(noButton, RED);
+    
+    DrawText("YES", yesButton.x + 35, yesButton.y + 12, 25, BLACK);
+    DrawText("NO", noButton.x + 40, noButton.y + 12, 25, BLACK);
+    
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        Vector2 mouse = GetMousePosition();
+        
+        if (CheckCollisionPointRec(mouse, yesButton))
+        {
+            borrowedMoney = true;
+            gamestate = 1;
+        }
+        else if (CheckCollisionPointRec(mouse, noButton))
+        {
+            gamestate = 1;
+        }
+    }
+}
+
+//===================== main game loop ==========================
+void gameloop()
+{
+    ClearBackground(DARKGREEN);
+    
+    // Check if money is -1000 for auto ending 6
+    if (money <= -1000)
+    {
+        endingType = 6;
+        gamestate = 3;
+        fade = 0;
+        fadeDirection = 1;
+        money = 1000;
+        return;
+    }
+    
+    // Money and Bet
+    char moneyText[50];
+    sprintf(moneyText, "Money: $%d", money);
+    DrawText(moneyText, SCREEN_WIDTH - 300, 20, 40, YELLOW);
+    
+    char betText[50];
+    sprintf(betText, "Bet: $%d", bet);
+    DrawText(betText, SCREEN_WIDTH - 300, 70, 40, YELLOW);
+    
+    // Bet Buttons
+    Rectangle decreaseBet = { SCREEN_WIDTH - 300, 115, 50, 50 };
+    Rectangle increaseBet = { SCREEN_WIDTH - 200, 115, 50, 50 };
+
+    DrawRectangleRec(decreaseBet, RED);
+    DrawText("-", decreaseBet.x + 15, decreaseBet.y + 7, 40, WHITE);
+
+    DrawRectangleRec(increaseBet, GREEN);
+    DrawText("+", increaseBet.x + 15, increaseBet.y + 7, 40, WHITE);
+    
+    // Title
+    DrawText("CASINO", SCREEN_WIDTH/2 - MeasureText("CASINO", 40)/2, 50, 40, GOLD);
+    
+    // Player Card
+    int playerCardX = 300;
+    DrawText("Your Card:", playerCardX - MeasureText("Your Card:", 30)/2, 200, 30, WHITE);
+    DrawRectangle(playerCardX - 50, 250, 100, 150, WHITE);
+    
+    if (playerCard == 1) DrawText("A", playerCardX - 10, 305, 40, RED);
+    else if (playerCard == 11) DrawText("J", playerCardX - 10, 305, 40, RED);
+    else if (playerCard == 12) DrawText("Q", playerCardX - 10, 305, 40, RED);
+    else if (playerCard == 13) DrawText("K", playerCardX - 10, 305, 40, RED);
+    else if (playerCard == 10) DrawText("10", playerCardX - 20, 305, 40, RED);
+    else
+    {
+        char cardText[3];
+        sprintf(cardText, "%d", playerCard);
+        DrawText(cardText, playerCardX - 10, 305, 40, RED);
+    }
+    
+    // Dealer Card
+    int dealerCardX = 900;
+    DrawText("Dealer Card:", dealerCardX - MeasureText("Dealer Card:", 30)/2, 200, 30, WHITE);
+    DrawRectangle(dealerCardX - 50, 250, 100, 150, WHITE);
+    
+    if (showDealer)
+    {
+        if (dealerCard == 1) DrawText("A", dealerCardX - 10, 305, 40, RED);
+        else if (dealerCard == 11) DrawText("J", dealerCardX - 10, 305, 40, RED);
+        else if (dealerCard == 12) DrawText("Q", dealerCardX - 10, 305, 40, RED);
+        else if (dealerCard == 13) DrawText("K", dealerCardX - 10, 305, 40, RED);
+        else if (dealerCard == 10) DrawText("10", dealerCardX - 20, 305, 40, RED);
+        else
+        {
+            char cardText[3];
+            sprintf(cardText, "%d", dealerCard);
+            DrawText(cardText, dealerCardX - 10, 305, 40, RED);
+        }
+    }
+    else
+    {
+        DrawRectangle(dealerCardX - 40, 260, 80, 130, DARKBLUE);
+    }
+    
+    // Game buttons
+    if (gameOver == 0)
+    {
+        Rectangle higherButton = { 400, 550, 150, 60 };
+        DrawRectangleRec(higherButton, GREEN);
+        DrawText("HIGHER", higherButton.x + 28, higherButton.y + 17, 25, BLACK);
+        
+        Rectangle lowerButton = { 650, 550, 150, 60 };
+        DrawRectangleRec(lowerButton, RED);
+        DrawText("LOWER", lowerButton.x + 33, lowerButton.y + 17, 25, BLACK);
+    }
+    else if (gameOver != 0)
+    {
+        if (gameOver == 1) DrawText("YOU WIN!", SCREEN_WIDTH/2 - MeasureText("YOU WIN!", 50)/2, 400, 50, YELLOW);
+        else DrawText("YOU LOSE!", SCREEN_WIDTH/2 - MeasureText("YOU LOSE!", 50)/2, 400, 50, RED);
+        
+        Rectangle playAgainButton = { SCREEN_WIDTH/2 - 100, 550, 200, 60 };
+        DrawRectangleRec(playAgainButton, YELLOW);
+        DrawText("PLAY AGAIN", playAgainButton.x + 20, playAgainButton.y + 17, 25, BLACK);
+    }
+    
+    // End Game button
+    Rectangle endButton = { 20, SCREEN_HEIGHT - 70, 150, 50 };
+    DrawRectangleRec(endButton, RED);
+    DrawText("END GAME", endButton.x + 10, endButton.y + 12, 25, BLACK);
+    
+    // Mouse clicks
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        Vector2 mouse = GetMousePosition();
+        
+        // Bet buttons
+        if (CheckCollisionPointRec(mouse, increaseBet))
+        {
+            if (borrowedMoney) bet += 50;
+            else if (bet + 50 <= money) bet += 50;
+            else gamestate = 2;
+        }
+        if (CheckCollisionPointRec(mouse, decreaseBet))
+        {
+            if (bet - 50 >= 50) bet -= 50;
+        }
+        
+        // Game buttons
+        if (gameOver == 0)
+        {
+            Rectangle higherButton = { 400, 550, 150, 60 };
+            if (CheckCollisionPointRec(mouse, higherButton))
+            {
+                if (money >= bet || borrowedMoney)
+                {
+                    showDealer = 1;
+                    if (dealerCard > playerCard)
+                    {
+                        gameOver = 1;
+                        money += bet;
+                    }
+                    else
+                    {
+                        gameOver = 2;
+                        money -= bet;
+                    }
+                }
+                else gamestate = 2;
+            }
+            
+            Rectangle lowerButton = { 650, 550, 150, 60 };
+            if (CheckCollisionPointRec(mouse, lowerButton))
+            {
+                if (money >= bet || borrowedMoney)
+                {
+                    showDealer = 1;
+                    if (dealerCard < playerCard)
+                    {
+                        gameOver = 1;
+                        money += bet;
+                    }
+                    else
+                    {
+                        gameOver = 2;
+                        money -= bet;
+                    }
+                }
+                else gamestate = 2;
+            }
+        }
+        else if (gameOver != 0)
+        {
+            Rectangle playAgainButton = { SCREEN_WIDTH/2 - 100, 550, 200, 60 };
+            if (CheckCollisionPointRec(mouse, playAgainButton))
+            {
+                ResetGame();
+            }
+        }
+        
+        // End Game button
+        if (CheckCollisionPointRec(mouse, endButton))
+        {
+            if (money > 1000) endingType = 5;
+            else if (money == 1000) endingType = 1;
+            else if (money < 1000 && money > 0) endingType = 4;
+            else if (money == 0) endingType = 2;
+            else if (money < 0) endingType = 3;
+            
+            money = 1000;
+            gamestate = 3;
+            fade = 0;
+            fadeDirection = 1;
+        }
+    }
+}
+
+void EndingScreen()
+{
+    if (fadeDirection == 1)
+    {
+        fade += 0.01f;
+        if (fade >= 1.0f)
+        {
+            fade = 1.0f;
+            fadeDirection = 0;
+        }
+    }
+    else
+    {
+        fade -= 0.01f;
+        if (fade <= 0.0f)
+        {
+            gamestate = 0;
+            return;
+        }
+    }
+    
+    ClearBackground(BLACK);
+    
+    char endingText[100];
+    if (endingType == 1) sprintf(endingText, "GREAT ENDING: You didn't gamble");
+    else if (endingType == 2) sprintf(endingText, "BROKE ENDING: You're now broke");
+    else if (endingType == 3) sprintf(endingText, "DEBT ENDING: You're now bankrupt");
+    else if (endingType == 4) sprintf(endingText, "LOSING ENDING: You lost money");
+    else if (endingType == 5) sprintf(endingText, "EARNING ENDING: You earned more money");
+    else if (endingType == 6) sprintf(endingText, "DEAD ENDING: You died due to debts");
+    
+    DrawText(endingText, SCREEN_WIDTH/2 - MeasureText(endingText, 40)/2, SCREEN_HEIGHT/2 - 20, 40, Fade(WHITE, fade));
 }
